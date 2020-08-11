@@ -1,0 +1,30 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool:
+  vmImage: 'windows-latest'
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'custom'
+    custom: 'tool'
+    arguments: 'install --tool-path . SignClient'
+  displayName: Install SignTool tool
+
+- pwsh: |
+    .\SignClient "Sign" `
+    --baseDirectory "$(Pipeline.Workspace)\ToSign" `
+    --input "**/*.{appxbundle,appinstaller,zip,nupkg}" `
+    --config "$(Pipeline.Workspace)\SigningScripts\appsettings.json" `
+    --filelist "$(Pipeline.Workspace)\SigningScripts\filelist.txt" `
+    --user "$(SignClientUser)" `
+    --secret "$(SignClientSecret)" `
+    --name "NuGet Package Explorer" `
+    --description "NuGet Package Explorer" `
+    --descriptionUrl "https://github.com/NuGetPackageExplorer/NuGetPackageExplorer"
+  displayName: Authenticode Sign artifacts
